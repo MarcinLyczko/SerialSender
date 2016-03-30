@@ -16,4 +16,8 @@ MainWindow::~MainWindow()
 void MainWindow::on_pushButton_clicked()
 {
     //tu będzie kod który zamknie usta niedowiarkom
+    QString stringi;
+    stringi="dupa";
+    stringi+=" dupcia";
+    ui->label->setText(stringi);
 }
