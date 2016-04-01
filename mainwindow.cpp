@@ -4,6 +4,7 @@
 #include <QSerialPort>
 #include <QSerialPortInfo>
 #include <QTimer>
+#include <QDateTime>
 
 
 MainWindow::MainWindow(QWidget *parent) :
@@ -12,9 +13,10 @@ MainWindow::MainWindow(QWidget *parent) :
 {
     ui->setupUi(this);
 
+    serial = new QSerialPort;
 
     QTimer *timer = new QTimer(this);
-    timer->setInterval(1000);
+    timer->setInterval(200);
 
     connect(timer, SIGNAL(timeout()),this, SLOT(update()));
     timer->start();
@@ -30,11 +32,12 @@ MainWindow::MainWindow(QWidget *parent) :
           ui->tablica->appendPlainText(i->portName()+" "+i->description());
           ui->comboBox->addItem(i->portName());
        }
-
 }
 
 MainWindow::~MainWindow()
 {
+    serial->close();
+    delete serial;
     delete ui;
 }
 
@@ -42,25 +45,31 @@ void MainWindow::on_pushButton_clicked()
 {
 
     QString stringi;
+
     stringi=ui->comboBox->currentText();
 
-    serial.setPortName(stringi);
-
-    ui->tablica->appendPlainText("Otwieram "+serial.portName());
-
-    serial.setBaudRate(QSerialPort::Baud115200);
-    serial.setDataBits(QSerialPort::Data8);
-    serial.setParity(QSerialPort::NoParity);
-    serial.setStopBits(QSerialPort::OneStop);
-    serial.setFlowControl(QSerialPort::NoFlowControl);
-    if(serial.open(QIODevice::ReadWrite)){
-        ui->tablica->appendPlainText("Port otwarty");
-        serial.write("***************************ok*\n\r");
-        serial.waitForBytesWritten(-1);
-        serial.close();
+    if(serial->isOpen()==false)
+    {
+        //próba otwarcia
+        serial->setPortName(stringi);
+        serial->setBaudRate(QSerialPort::Baud115200);
+        serial->setDataBits(QSerialPort::Data8);
+        serial->setParity(QSerialPort::NoParity);
+        serial->setStopBits(QSerialPort::OneStop);
+        serial->setFlowControl(QSerialPort::NoFlowControl);
+        ui->tablica->appendPlainText("Otwieram "+serial->portName());
+        if(serial->open(QIODevice::ReadWrite)){
+            ui->tablica->appendPlainText("Port "+serial->portName()+" otwarty");
+        }
+        else{
+            ui->tablica->appendPlainText("Error!"+serial->errorString());
+        }
     }
-    else{
-        ui->tablica->appendPlainText("Error!"+serial.errorString());
+    else
+    {
+        //port otwarty to zamkniemy
+        ui->tablica->appendPlainText("Port "+serial->portName()+" zamknięty");
+        serial->close();
     }
 
 
@@ -73,5 +82,21 @@ void MainWindow::on_pushButton_2_clicked()
 
 void MainWindow::update()
 {
-    ui->tablica->appendPlainText("tik");
+    QTime zegar = QTime::currentTime();
+    QString a;
+
+    if(serial->isOpen()){
+        ui->label2->setText("Port otwarty");
+        a=zegar.toString("hh:mm:ss")+" "+QString::number(ui->suwak->value());
+        a+="\r";
+        serial->write(a.toStdString().c_str());
+        //serial->waitForBytesWritten(-1);
+    }
+    else{
+        ui->label2->setText("Port zamkniety");
+    }
+
+
+    ui->label->setText(zegar.toString("hh:mm:ss")+" "+QString::number(ui->suwak->value()));
+
 }

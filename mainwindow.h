@@ -5,6 +5,7 @@
 
 #include <QtSerialPort/QSerialPort>
 #include <QTimer>
+#include <QDateTime>
 
 namespace Ui {
 class MainWindow;
@@ -25,8 +26,9 @@ private slots:
 
 private:
     Ui::MainWindow *ui;
-    QSerialPort serial;
+    QSerialPort *serial;
     QTimer *timer;
+    QTime zegar;
 };
 
 #endif // MAINWINDOW_H
