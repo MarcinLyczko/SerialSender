@@ -6,7 +6,7 @@
 #include <QTimer>
 #include <QDateTime>
 
-
+//Konstruktor
 MainWindow::MainWindow(QWidget *parent) :
     QMainWindow(parent),
     ui(new Ui::MainWindow)
@@ -18,13 +18,17 @@ MainWindow::MainWindow(QWidget *parent) :
     QTimer *timer = new QTimer(this);
     timer->setInterval(200);
 
+    //połaczenie sygnału timera z oknem update
     connect(timer, SIGNAL(timeout()),this, SLOT(update()));
     timer->start();
+
+    connect(serial, SIGNAL(readyRead()), this, SLOT(readData()));
 
     QSerialPortInfo porty;
     QList<QSerialPortInfo> lista;
     lista=porty.availablePorts();
     ui->tablica->appendPlainText("Aviable Ports:");
+
 
     QList<QSerialPortInfo>::iterator i;
     for (i=lista.begin() ; i<lista.end();i++)
@@ -34,6 +38,7 @@ MainWindow::MainWindow(QWidget *parent) :
        }
 }
 
+//destruktor
 MainWindow::~MainWindow()
 {
     serial->close();
@@ -41,6 +46,7 @@ MainWindow::~MainWindow()
     delete ui;
 }
 
+//Klawisz START
 void MainWindow::on_pushButton_clicked()
 {
 
@@ -75,28 +81,43 @@ void MainWindow::on_pushButton_clicked()
 
 }
 
+//Funkcja czyści okno
 void MainWindow::on_pushButton_2_clicked()
 {
     ui->tablica->clear();
 }
 
+void MainWindow::readData()
+{
+    //Sprawdzeie czy nie ma danych do odbioru
+   // if(serial->bytesAvailable()>0)
+   // {
+        QByteArray daneRX;
+        daneRX=serial->readAll();
+        daneRX="Coś przyszło..";
+        ui->tablica->appendPlainText(QString(daneRX));
+
+   // }
+}
+
+//Funkcja wysyła dane na zdarzeniu update
 void MainWindow::update()
 {
     QTime zegar = QTime::currentTime();
     QString a;
 
+    //wysyłanie danych
     if(serial->isOpen()){
         ui->label2->setText("Port otwarty");
         a=zegar.toString("hh:mm:ss")+" "+QString::number(ui->suwak->value());
         a+="\r";
-        serial->write(a.toStdString().c_str());
+        if(ui->checkBox->isChecked()) serial->write(a.toStdString().c_str());
         //serial->waitForBytesWritten(-1);
+
     }
     else{
         ui->label2->setText("Port zamkniety");
     }
-
-
     ui->label->setText(zegar.toString("hh:mm:ss")+" "+QString::number(ui->suwak->value()));
 
 }
