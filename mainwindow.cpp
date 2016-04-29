@@ -5,6 +5,7 @@
 #include <QSerialPortInfo>
 #include <QTimer>
 #include <QDateTime>
+#include <QMessagebox>
 
 //Konstruktor
 MainWindow::MainWindow(QWidget *parent) :
@@ -16,7 +17,7 @@ MainWindow::MainWindow(QWidget *parent) :
     serial = new QSerialPort;
 
     QTimer *timer = new QTimer(this);
-    timer->setInterval(200);
+    timer->setInterval(1000);
 
     //połaczenie sygnału timera z oknem update
     connect(timer, SIGNAL(timeout()),this, SLOT(update()));
@@ -54,21 +55,25 @@ void MainWindow::on_pushButton_clicked()
 
     stringi=ui->comboBox->currentText();
 
+
+
     if(serial->isOpen()==false)
     {
         //próba otwarcia
         serial->setPortName(stringi);
-        serial->setBaudRate(QSerialPort::Baud115200);
-        serial->setDataBits(QSerialPort::Data8);
-        serial->setParity(QSerialPort::NoParity);
-        serial->setStopBits(QSerialPort::OneStop);
-        serial->setFlowControl(QSerialPort::NoFlowControl);
+
         ui->tablica->appendPlainText("Otwieram "+serial->portName());
         if(serial->open(QIODevice::ReadWrite)){
             ui->tablica->appendPlainText("Port "+serial->portName()+" otwarty");
+            serial->setBaudRate(QSerialPort::Baud115200);
+            serial->setDataBits(QSerialPort::Data8);
+            serial->setParity(QSerialPort::NoParity);
+            serial->setStopBits(QSerialPort::OneStop);
+            serial->setFlowControl(QSerialPort::NoFlowControl);
         }
         else{
             ui->tablica->appendPlainText("Error!"+serial->errorString());
+            QMessageBox::critical(0, "ERROR", serial->errorString());
         }
     }
     else
@@ -90,14 +95,15 @@ void MainWindow::on_pushButton_2_clicked()
 void MainWindow::readData()
 {
     //Sprawdzeie czy nie ma danych do odbioru
-   // if(serial->bytesAvailable()>0)
-   // {
-        QByteArray daneRX;
-        daneRX=serial->readAll();
-        daneRX="Coś przyszło..";
-        ui->tablica->appendPlainText(QString(daneRX));
+    QByteArray daneRX;
 
-   // }
+ /*   ui->tablica->appendPlainText("przyszło...");
+
+    while(serial->bytesAvailable()>0)
+    {
+        daneRX+=serial->readAll();
+        ui->tablica->appendPlainText(QString(daneRX));
+    }*/
 }
 
 //Funkcja wysyła dane na zdarzeniu update
@@ -105,6 +111,7 @@ void MainWindow::update()
 {
     QTime zegar = QTime::currentTime();
     QString a;
+    QByteArray daneRX;
 
     //wysyłanie danych
     if(serial->isOpen()){
@@ -113,6 +120,19 @@ void MainWindow::update()
         a+="\r";
         if(ui->checkBox->isChecked()) serial->write(a.toStdString().c_str());
         //serial->waitForBytesWritten(-1);
+
+
+        //próba odbioru danych
+        serial->waitForReadyRead(10);
+        while(serial->bytesAvailable()!=0)
+        {
+            ui->tablica->appendPlainText("przyszło..."+QString::number(serial->bytesAvailable()));
+            daneRX.append(serial->readAll());
+            ui->tablica->appendPlainText(QString(daneRX));
+        }
+
+        //ui->tablica->appendPlainText(serial->errorString());
+
 
     }
     else{
