@@ -69,7 +69,8 @@ void MainWindow::on_pushButton_clicked()
             serial->setDataBits(QSerialPort::Data8);
             serial->setParity(QSerialPort::NoParity);
             serial->setStopBits(QSerialPort::OneStop);
-            serial->setFlowControl(QSerialPort::NoFlowControl);
+            serial->setFlowControl(QSerialPort::HardwareControl);
+            //serial->setFlowControl(QSerialPort::NoFlowControl);
         }
         else{
             ui->tablica->appendPlainText("Error!"+serial->errorString());
@@ -97,13 +98,13 @@ void MainWindow::readData()
     //Sprawdzeie czy nie ma danych do odbioru
     QByteArray daneRX;
 
- /*   ui->tablica->appendPlainText("przyszło...");
+    ui->tablica->appendPlainText("przyszło...");
 
     while(serial->bytesAvailable()>0)
     {
         daneRX+=serial->readAll();
         ui->tablica->appendPlainText(QString(daneRX));
-    }*/
+    }
 }
 
 //Funkcja wysyła dane na zdarzeniu update
@@ -119,19 +120,6 @@ void MainWindow::update()
         a=zegar.toString("hh:mm:ss")+" "+QString::number(ui->suwak->value());
         a+="\r";
         if(ui->checkBox->isChecked()) serial->write(a.toStdString().c_str());
-        //serial->waitForBytesWritten(-1);
-
-
-        //próba odbioru danych
-        serial->waitForReadyRead(10);
-        while(serial->bytesAvailable()!=0)
-        {
-            ui->tablica->appendPlainText("przyszło..."+QString::number(serial->bytesAvailable()));
-            daneRX.append(serial->readAll());
-            ui->tablica->appendPlainText(QString(daneRX));
-        }
-
-        //ui->tablica->appendPlainText(serial->errorString());
 
 
     }
